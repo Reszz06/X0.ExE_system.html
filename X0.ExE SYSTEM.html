@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>X0.ExE | X0.Deploy  🎀</title>
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;800&family=Plus+Jakarta+Sans:wght@300;400;600;800&display=swap" rel="stylesheet">
+    
+    <style>
+        :root { 
+            --pink: #ff007f; 
+            --pink-glow: rgba(255, 0, 127, 0.7);
+            --dark: #050505; 
+            --glass: rgba(10, 10, 10, 0.85); 
+            --text: #ffffff; 
+            --accent: #ff85c0;
+        }
+        
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { background: var(--dark); color: var(--text); overflow-x: hidden; font-family: 'Plus Jakarta Sans', sans-serif; }
+
+        #matrix-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; opacity: 0.5; pointer-events: none; }
+
+        /* LOADING SCREEN */
+        #loader {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: var(--dark); z-index: 9999;
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+        }
+        .spinner {
+            width: 60px; height: 60px; border: 3px solid transparent;
+            border-top: 3px solid var(--pink); border-right: 3px solid var(--pink);
+            border-radius: 50%; animation: spin 0.8s linear infinite;
+        }
+        #loader-status { 
+            margin-top: 20px; font-family: 'Orbitron'; font-size: 0.7rem; 
+            color: var(--pink); letter-spacing: 2px; text-align: center;
+        }
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+
+        #main-content { opacity: 0; transition: 1.5s ease; }
+        #main-content.loaded { opacity: 1; }
+
+        header { padding: 40px 20px 10px; text-align: center; }
+        .logo { font-family: 'Orbitron'; font-size: 2.5rem; font-weight: 800; color: white; text-shadow: 0 0 15px var(--pink); letter-spacing: 5px; }
+        .logo span { color: var(--pink); }
+
+        .time-container { 
+            margin: 20px auto; font-family: 'Orbitron'; background: rgba(255, 0, 127, 0.05);
+            padding: 15px; border-radius: 15px; border: 1px solid rgba(255, 0, 127, 0.2); 
+            display: inline-block; min-width: 250px; backdrop-filter: blur(5px); text-align: center;
+        }
+        #full-date { font-size: 0.6rem; color: #fff; letter-spacing: 1px; margin-bottom: 5px; }
+        #clock { font-size: 1.5rem; color: var(--pink); text-shadow: 0 0 10px var(--pink-glow); font-weight: 800; }
+        #uptime { font-size: 0.6rem; color: #888; margin-top: 8px; }
+
+        .container { max-width: 420px; margin: 0 auto; padding: 0 20px 50px; position: relative; z-index: 1; }
+        
+        .nav-container { max-width: 400px; margin: 10px auto 20px; display: flex; flex-direction: column; gap: 10px; }
+        .nav-row { display: flex; justify-content: center; gap: 8px; }
+        .tab-btn { 
+            padding: 12px; border: 1px solid rgba(255, 0, 127, 0.3); border-radius: 12px;
+            background: var(--glass); color: #aaa; cursor: pointer; font-family: 'Orbitron'; 
+            font-size: 0.6rem; transition: 0.3s; flex: 1; text-align: center;
+        }
+        .tab-btn.active { background: var(--pink); color: white; box-shadow: 0 0 15px var(--pink-glow); border-color: var(--pink); }
+
+        .content-section { display: none; }
+        .content-section.active { display: block; animation: fadeIn 0.5s ease; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; } }
+
+        .glass-card { background: var(--glass); padding: 25px; border-radius: 20px; border: 1px solid rgba(255, 255, 255, 0.1); backdrop-filter: blur(12px); margin-bottom: 20px; }
+        
+        .skill-info { display: flex; justify-content: space-between; font-size: 0.65rem; font-family: 'Orbitron'; margin-bottom: 6px; color: var(--accent); }
+        .skill-bar { width: 100%; height: 6px; background: rgba(255, 255, 255, 0.1); border-radius: 10px; margin-bottom: 12px; overflow: hidden; }
+        .skill-per { height: 100%; background: linear-gradient(90deg, var(--pink), #ff85c0); box-shadow: 0 0 10px var(--pink); }
+
+        .list-item { display: flex; align-items: center; padding: 14px; background: rgba(255,255,255,0.05); border-radius: 15px; margin-bottom: 10px; border: 1px solid rgba(255,255,255,0.08); text-decoration: none; color: white; transition: 0.3s; cursor: pointer; }
+        .list-item:hover { border-color: var(--pink); background: rgba(255,0,127,0.05); }
+        .list-item i { color: var(--pink); margin-right: 15px; font-size: 1.2rem; }
+
+        .join-input { width: 100%; padding: 14px; background: rgba(0, 0, 0, 0.6); border: 1px solid rgba(255, 0, 127, 0.4); border-radius: 15px; color: white; margin-bottom: 15px; text-align: center; outline: none; }
+        .btn-submit { width: 100%; padding: 16px; background: linear-gradient(45deg, #ff007f, #b30059); border: none; border-radius: 15px; color: white; font-family: 'Orbitron'; font-size: 0.75rem; font-weight: 800; cursor: pointer; letter-spacing: 3px; }
+
+        /* MODAL STYLES */
+        .modal {
+            display: none; position: fixed; z-index: 10000; left: 0; top: 0; 
+            width: 100%; height: 100%; background: rgba(0,0,0,0.85); backdrop-filter: blur(10px);
+        }
+        .modal-content {
+            background: var(--glass); margin: 30% auto; padding: 30px; border: 1px solid var(--pink);
+            border-radius: 20px; width: 85%; max-width: 350px; text-align: center;
+            box-shadow: 0 0 25px var(--pink-glow); position: relative; animation: modalAnim 0.4s ease;
+        }
+        @keyframes modalAnim { from { opacity: 0; transform: scale(0.8); } to { opacity: 1; transform: scale(1); } }
+        .close-modal { position: absolute; top: 10px; right: 15px; color: var(--pink); font-size: 1.5rem; cursor: pointer; }
+
+        footer { text-align: center; padding: 30px; font-size: 0.6rem; color: #555; font-family: 'Orbitron'; }
+    </style>
+</head>
+<body>
+
+    <div id="loader">
+        <div class="spinner"></div>
+        <div id="loader-status">INITIALIZING...</div>
+    </div>
+
+    <canvas id="matrix-canvas"></canvas>
+
+    <div id="main-content">
+        <header>
+            <div class="logo">X0<span>.EXE</span></div>
+            <div class="time-container">
+                <div id="full-date">LOADING...</div>
+                <div id="clock">00:00:00</div>
+                <div id="uptime">SESSION ACTIVE: 0s</div>
+            </div>
+        </header>
+
+        <div class="container">
+            <div class="nav-container">
+                <div class="nav-row">
+                    <button class="tab-btn active" onclick="openTab('about')">BIO</button>
+                    <button class="tab-btn" onclick="openTab('projects')">WORK</button>
+                    <button class="tab-btn" onclick="openTab('socials')">SOCIAL</button>
+                </div>
+                <div class="nav-row" style="padding: 0 15%;">
+                    <button class="tab-btn" onclick="openTab('friends')">TEAM</button>
+                    <button class="tab-btn" onclick="openTab('join')">JOIN</button>
+                </div>
+            </div>
+
+            <div id="about" class="content-section active"><div id="about" class="content-section active">
+    <div class="glass-card">
+        <h3 style="color: var(--pink); font-family: 'Orbitron'; text-align: center; margin-bottom: 10px;">X0.ExE</h3>
+        
+        <p style="font-size: 0.75rem; color: #ccc; text-align: justify; line-height: 1.8; margin-bottom: 20px;">
+            STATUS: ONLINE<br>
+            USER: RAXEL [OWNER]<br>
+            ORG: X0.DEPLOY<br><br>
+            X0.ExE merupakan entitas pengembang, di balik identitas X0.ExE.<br> Berfokus pada eksplorasi alat digital, otomasi sistem, dan kreativitas berbasis kode.<br> Meskipun saat ini status saya masih dalam tahap "Early Learner" atau pemula.<br> X0.ExE menjadi bahan bakar utama dalam setiap project yang saya buat.
+        </p>
+                
+                    
+                    <h4 style="color: var(--pink); font-family: 'Orbitron'; font-size: 0.7rem; margin-bottom: 15px; text-align: center;">MY SKILLS</h4>
+                    <div class="skill-info"><span>HTML / CSS</span><span>80%</span></div>
+                    <div class="skill-bar"><div class="skill-per" style="width: 80%;"></div></div>
+                    <div class="skill-info"><span>JAVASCRIPT</span><span>55%</span></div>
+                    <div class="skill-bar"><div class="skill-per" style="width: 55%;"></div></div>
+                    <div class="skill-info"><span>PYTHON</span><span>90%</span></div>
+                    <div class="skill-bar"><div class="skill-per" style="width: 90%;"></div></div>
+                </div>
+            </div>
+
+            <div id="projects" class="content-section">
+                <div class="glass-card">
+                    <div class="list-item" onclick="showInfo('Automated Lyrics Display', 'Script Python untuk menampilkan lirik lagu/dengan efek mengetik otomatis (typing effect). Menggunakan modul sys dan time untuk mengatur jeda waktu per karakter agar muncul satu per satu secara sistematis..')">
+                        <i class="fas fa-music"></i> <div><h4 style="font-size:0.8rem">Lirik Lagu Berjalan</h4><p style="font-size:0.6rem; color:#888">Klik Disini Untuk Melihat Detail</p></div>
+                    </div>
+                    <div class="list-item" onclick="showInfo('kalkulator celcius ke farenheit ', 'Project Kalkulator Celcius ke Fahrenheit adalah sebuah program sederhana yang berfungsi untuk mengubah nilai satuan suhu dari skala Celsius menjadi Fahrenheit secara otomatis menggunakan rumus matematika.')">
+                        <i class="fas fa-terminal"></i> <div><h4 style="font-size:0.8rem">Kalkulator Celsius ke farenheit by X0.ExE</h4><p style="font-size:0.6rem; color:#888">Klik Disini Untuk Melihat Detail </p></div>
+                    </div>
+                    <div class="list-item" onclick="showInfo('Digital Gift', 'sebuah proyek pemrograman sederhana yang dibuat khusus untuk menyampaikan pesan romantis, ulang tahun, atau hari jadian kepada pasangan melalui link website.')">
+                        <i class="fas fa-gift"></i> <div><h4 style="font-size:0.8rem">Digital Gift</h4><p style="font-size:0.6rem; color:#888"> Klik Disini Untuk Melihat Detail</p></div>
+                    </div>
+                    <div class="list-item" onclick="showInfo('web Portfolio', 'Project landing page bertema Cyberpunk (v2.0) yang saat ini sedang saya proses dan update berkelanjutan.')">
+                        <i class="fas fa-code"></i> <div><h4 style="font-size:0.8rem">web Portfolio</h4><p style="font-size:0.6rem; color:#888">Klik Disini Untuk Melihat Detail</p></div>
+                    </div>
+                    <div class="list-item" onclick="showInfo('Data Automator', 'Bot Python yang berfungsi mengotomasi pengumpulan data dari website (Web Scraping) ke dalam format Excel.')">
+                        <i class="fas fa-database"></i> <div><h4 style="font-size:0.8rem">Data Automator</h4><p style="font-size:0.6rem; color:#888"> Klik Disini Untuk Melihat Detail</p></div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="socials" class="content-section">
+                <div class="glass-card">
+                    <a href="#" class="list-item" target="_blank"><i class="fab fa-tiktok"></i> <span>TikTok</span></a>
+                    <a href="https://www.instagram.com/x0.deploy?igsh=bzRuZ2x2NWd1cXIz" class="list-item" target="_blank"><i class="fab fa-instagram"></i> <span>Instagram</span></a>
+                    <a href="https://whatsapp.com/channel/0029Vb7XQpZ4IBhAXx7UVh2d" class="list-item" target="_blank"><i class="fab fa-whatsapp"></i> <span>WA Channel</span></a>
+                    <a href="https://github.com/Reszz06" class="list-item" target="_blank"><i class="fab fa-github"></i> <span>GitHub</span></a>
+                </div>
+            </div>
+
+            <div id="friends" class="content-section">
+                <div class="glass-card">
+                    <div class="list-item" onclick="showInfo('Zax', 'Hello guys kenalin gw Zax salah satu anggota team X0.ExE gw sebagai Analyst.')">
+                        <i class="fas fa-user-gear"></i> <div><h4 style="font-size:0.8rem">Zax</h4><p style="font-size:0.6rem; color:#888">always loving coding not you</p></div>
+                    </div>
+                    <div class="list-item" onclick="showInfo('Xen', 'Bertugas menguji setiap fitur baru (Quality Assurance) dan mencari celah atau bug sebelum dirilis ke publik.')">
+                        <i class="fas fa-user-code"></i> <div><h4 style="font-size:0.8rem">Xan</h4><p style="font-size:0.6rem; color:#888">Raxel,Zax suka kamu katanya </p></div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="join" class="content-section">
+                <div class="glass-card">
+                    <h4 style="font-family: 'Orbitron'; font-size: 0.75rem; color: var(--pink); margin-bottom: 15px; text-align: center;">Join my team</h4>
+                    <input type="text" id="joinName" class="join-input" placeholder="INPUT AGENT NAME...">
+                    <button class="btn-submit" onclick="addMember()">DAFTAR</button>
+                    <div id="memberList" style="margin-top:20px;"></div>
+                </div>
+            </div>
+        </div>
+
+        <div id="info-modal" class="modal">
+            <div class="modal-content">
+                <span class="close-modal" onclick="closeInfo()">&times;</span>
+                <h2 id="modal-title" style="color: var(--pink); font-family: 'Orbitron'; font-size: 1rem; margin-bottom: 15px;"></h2>
+                <p id="modal-desc" style="font-size: 0.75rem; color: #ccc; line-height: 1.6;"></p>
+            </div>
+        </div>
+
+        <footer>&copy; 2026 X0.EXE | ALL SYSTEMS ONLINE</footer>
+    </div>
+
+    <script>
+        // TIME & UPTIME
+        let upSec = 0;
+        function updateTime() {
+            const now = new Date();
+            const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+            document.getElementById('full-date').innerText = now.toLocaleDateString('id-ID', options).toUpperCase();
+            document.getElementById('clock').innerText = now.getHours().toString().padStart(2,'0') + ":" + now.getMinutes().toString().padStart(2,'0') + ":" + now.getSeconds().toString().padStart(2,'0');
+            upSec++; document.getElementById('uptime').innerText = "SESSION ACTIVE: " + upSec + "s";
+        }
+        setInterval(updateTime, 1000); updateTime();
+
+        // TAB FUNCTION
+        function openTab(tabId) {
+            document.querySelectorAll('.content-section').forEach(s => s.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById(tabId).classList.add('active');
+            event.currentTarget.classList.add('active');
+        }
+
+        // INFO MODAL FUNCTION
+        function showInfo(title, desc) {
+            document.getElementById('modal-title').innerText = title;
+            document.getElementById('modal-desc').innerText = desc;
+            document.getElementById('info-modal').style.display = 'block';
+        }
+
+        function closeInfo() {
+            document.getElementById('info-modal').style.display = 'none';
+        }
+
+        // Close modal when clicking outside
+        window.onclick = function(event) {
+            let modal = document.getElementById('info-modal');
+            if (event.target == modal) {
+                modal.style.display = "none";
+            }
+        }
+
+        // JOIN MEMBER FUNCTION
+        function addMember() {
+            const input = document.getElementById('joinName');
+            if (input.value.trim() !== "") {
+                const list = document.getElementById('memberList');
+                const div = document.createElement('div');
+                div.style.cssText = "font-size:0.7rem; color:white; padding:10px; background:rgba(255,0,127,0.1); border-radius:10px; margin-top:5px; border-left:3px solid var(--pink);";
+                div.innerText = "√ AGENT: " + input.value.toUpperCase();
+                list.prepend(div); input.value = "";
+            }
+        }
+
+        // MATRIX EFFECT
+        const canvas = document.getElementById('matrix-canvas');
+        const ctx = canvas.getContext('2d');
+        let w, h, col, d;
+        function initM() { w=canvas.width=window.innerWidth; h=canvas.height=window.innerHeight; col=Math.floor(w/20); d=new Array(col).fill(1); }
+        function drawM() { ctx.fillStyle="rgba(5,5,5,0.15)"; ctx.fillRect(0,0,w,h); ctx.font="14px monospace"; ctx.fillStyle="#ff007f"; d.forEach((y,i)=>{ const t="X0"[Math.floor(Math.random()*2)]; ctx.fillText(t,i*20,y*20); if(y*20>h&&Math.random()>0.975)d[i]=0; d[i]++; }); }
+        window.addEventListener('resize', initM); initM(); setInterval(drawM, 55);
+
+        // LOADING SCRIPT
+        window.addEventListener('load', () => {
+            const status = document.getElementById('loader-status');
+            const sequences = [
+                "MENGAKSES WEB X0.ExE...", 
+                "ESTABLISHING CONNECTION...", 
+                "BYPASSING ENCRYPTION...", 
+                "LOADING X0.EXE...", 
+                "ACCESS GRANTED!"
+            ];
+            let i = 1;
+            const textInterval = setInterval(() => {
+                status.innerText = sequences[i];
+                i++;
+                if (i >= sequences.length) clearInterval(textInterval);
+            }, 600);
+
+            setTimeout(() => {
+                document.getElementById('loader').style.display = 'none';
+                document.getElementById('main-content').classList.add('loaded');
+            }, 3200);
+        });
+    </script>
+</body>
+</html>
